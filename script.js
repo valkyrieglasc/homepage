@@ -1,6 +1,6 @@
 // At the top of your JS
-const terminalSound = new Audio('/sound/starting.mp3');
-const diceSound = new Audio('/sound/dice.mp3');
+const terminalSound = new Audio('./sound/starting.mp3');
+const diceSound = new Audio('./sound/dice.mp3');
 
 // Preload sounds
 terminalSound.preload = 'auto';
