@@ -1,3 +1,22 @@
+// At the top of your JS
+const terminalSound = new Audio('sound/terminal.mp3');
+const diceSound = new Audio('sound/dice.mp3');
+
+// Preload sounds
+terminalSound.preload = 'auto';
+diceSound.preload = 'auto';
+
+function playTerminalSound() {
+    terminalSound.currentTime = 0;
+    terminalSound.volume = 0.3;
+    terminalSound.play().catch(e => console.log("Audio play failed:", e));
+}
+
+function playDiceSound() {
+    diceSound.currentTime = 0;
+    diceSound.volume = 0.2;
+    diceSound.play().catch(e => console.log("Audio play failed:", e));
+}
 document.addEventListener('DOMContentLoaded', function() {
     
     // Navigation
