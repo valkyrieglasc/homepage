@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE_GLASC://KYRIE</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="glitch-overlay"></div>
+    <div class="particles"></div>
+    <div class="glow-effect"></div>
+    
+    <div class="terminal">
+        <div class="header">
+            <div class="title glitch" data-text="THE_GLASC://KYRIE">❤︎ THE_GLASC://KYRIE || ₍₍ (̨̡⸝⸝´꒳`⸝⸝)̧̢ ₎₎</div>
+            <div class="header-pulse"></div>
+            <div class="nav">
+                <a href="#" class="nav-item active" data-section="home">[HOME]</a>
+                <a href="#" class="nav-item" data-section="gallery">[GALLERY]</a>
+                <a href="#" class="nav-item" data-section="dice">[DICE]</a>
+                <a href="#" class="nav-item" id="fullscreen-btn">[FULLSCREEN]</a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Home Section -->
+            <div id="home" class="section active">
+                <div class="prompt">> <span class="typewriter">SYSTEM_INITIALIZED...</span></div>
+                <div class="prompt">> <span class="typewriter" data-delay="0">WELCOME_BACK_KYRIE_<3</span></div>
+                <div>> Last login: <b><i><span id="datetime"></span></i></b></div>
+                <div class="console-output" id="console"></div>
+                <div class="input-line">
+                    <span class="prompt blinking">></span>
+                    <input type="text" id="command-input" autofocus>
+                </div>
+            </div>
+            
+            <!-- Gallery Section -->
+            <div id="gallery" class="section">
+                <div class="prompt">> <span class="typewriter">GALLERY_MODULE_LOADED...</span></div>
+                <div class="prompt">> <span class="typewriter" data-delay="0">ACCESSING_NEURAL_DATABASE</span></div>
+                <div class="grid-container" id="image-grid"></div>
+                <div class="prompt">> <span class="typewriter" data-delay="0">READY_FOR_IMAGE_SELECTION</span></div>
+            </div>
+            
+            <!-- Dice Section -->
+            <div id="dice" class="section">
+                <div class="prompt">> <span class="typewriter">DICE_SIMULATOR_ACTIVATED</span></div>
+                <div class="prompt">> <span class="typewriter" data-delay="0">QUANTUM_RANDOMIZER_ENGAGED</span></div>
+                <div class="dice-container">
+                    <div class="dice" id="dice-result">?</div>
+                    <button id="roll-btn" class="cyber-button">[ROLL DICE]</button>
+                </div>
+                <div class="roll-history" id="roll-history"></div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="terminal-sound" src="../sound/starting.mp3"></audio>
+    <audio id="dice-sound" src="../sound/dice.mp3"></audio>
+    
+    <script src="script.js"></script>
+</body>
+</html>
