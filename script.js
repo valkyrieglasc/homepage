@@ -685,4 +685,74 @@ document.addEventListener('keydown', (e) => {
             this.value = '';
         }
     });
+    // === YOUTUBE MUSIC PLAYER ===
+const ytPlayer = document.getElementById('yt-player');
+const songTitle = document.getElementById('current-song-title');
+const inputUrl = document.getElementById('youtube-url');
+const inputTitle = document.getElementById('youtube-title');
+
+let playlist = JSON.parse(localStorage.getItem('playlist')) || [
+
+];
+
+let currentIndex = 0;
+let isLooping = false;
+
+function savePlaylist() {
+    localStorage.setItem('playlist', JSON.stringify(playlist));
+}
+
+function extractYoutubeID(url) {
+    try {
+        const regex = /(?:youtube\.com.*v=|youtu\.be\/)([^&\n]+)/;
+        const match = url.match(regex);
+        return match ? match[1] : url;
+    } catch {
+        return url;
+    }
+}
+
+function loadSong(index) {
+    const song = playlist[index];
+    songTitle.textContent = song.title;
+    ytPlayer.src = `https://www.youtube.com/embed/${song.id}?autoplay=1&loop=${isLooping ? 1 : 0}&playlist=${song.id}&enablejsapi=1`;
+}
+
+document.getElementById('play-btn').addEventListener('click', () => {
+    ytPlayer.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+});
+
+document.getElementById('next-btn').addEventListener('click', () => {
+    currentIndex = (currentIndex + 1) % playlist.length;
+    loadSong(currentIndex);
+});
+
+document.getElementById('prev-btn').addEventListener('click', () => {
+    currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+    loadSong(currentIndex);
+});
+
+document.getElementById('loop-btn').addEventListener('click', () => {
+    isLooping = !isLooping;
+    loadSong(currentIndex);
+    document.getElementById('loop-btn').textContent = isLooping ? "🔂 Looping" : "🔁 Loop";
+});
+
+document.getElementById('add-song-btn').addEventListener('click', () => {
+    const rawUrl = inputUrl.value.trim();
+    const title = inputTitle.value.trim() || "New Song";
+    if (!rawUrl) return;
+
+    const id = extractYoutubeID(rawUrl);
+    playlist.push({ title, id });
+    savePlaylist();
+    inputUrl.value = '';
+    inputTitle.value = '';
+    if (playlist.length === 1) {
+        loadSong(0);
+    }
+});
+
+// Load the first song
+loadSong(currentIndex);
 });
