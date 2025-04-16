@@ -391,189 +391,124 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 800);
     }
     
-    // Gallery Section
-    const imageGrid = document.getElementById('image-grid');
-    const imageUrls = [];
-    for (let i = 1; i <= 11; i++) {
-        imageUrls.push(`gallery/pic${i}.jpg`);
-    }
-    
-    const previewContainer = document.createElement('div');
-    previewContainer.className = 'image-preview';
-    const previewImg = document.createElement('img');
-    previewContainer.appendChild(previewImg);
-    document.body.appendChild(previewContainer);
-    
-    // Track hover state
-    let isHovering = false;
-    let currentHoveredItem = null;
-    let hoverTimer = null;
-    
-    // Function to update preview position based on cursor
-    function updatePreviewPosition(e, gridItem) {
-        if (!isHovering || !gridItem) return;
-        
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        
-        // Set maximum preview dimensions
-        const maxPreviewWidth = Math.min(400, viewportWidth * 0.4);
-        const maxPreviewHeight = Math.min(400, viewportHeight * 0.4);
-        
-        // Calculate position based on cursor
-        let leftPos = e.clientX;
-        let topPos = e.clientY;
-        
-        // Get image aspect ratio and adjust dimensions
-        const imgWidth = previewImg.naturalWidth || maxPreviewWidth;
-        const imgHeight = previewImg.naturalHeight || maxPreviewHeight;
-        const aspectRatio = imgWidth / imgHeight;
-        
-        let previewWidth, previewHeight;
-        
-        if (aspectRatio > 1) {
-            // Landscape image
-            previewWidth = maxPreviewWidth / aspectRatio;
-            previewHeight = previewWidth / aspectRatio;
+// Optimized Image Preview System with Smooth Flow and Floating Animation
+
+// Gallery Section
+const imageGrid = document.getElementById('image-grid');
+const imageUrls = Array.from({ length: 11 }, (_, i) => `gallery/pic${i + 1}.jpg`);
+
+// Create preview container
+const previewContainer = document.createElement('div');
+previewContainer.className = 'image-preview hidden';
+const previewImg = document.createElement('img');
+previewContainer.appendChild(previewImg);
+document.body.appendChild(previewContainer);
+
+// State variables
+let hoverTimer = null;
+
+// Utility: Throttle function for smooth cursor tracking
+function throttle(func, limit) {
+    let lastFunc;
+    let lastRan;
+    return function (...args) {
+        const context = this;
+        if (!lastRan) {
+            func.apply(context, args);
+            lastRan = Date.now();
         } else {
-            // Portrait or square image
-            previewHeight = maxPreviewHeight;
-            previewWidth = previewHeight * aspectRatio;
-        }
-        
-        // Add margin to prevent preview from touching cursor
-        const marginX = 20;
-        const marginY = 20;
-        
-        // Position preview to avoid going off-screen
-        if (leftPos + previewWidth + marginX > viewportWidth) {
-            leftPos = leftPos - previewWidth - marginX;
-        } else {
-            leftPos = leftPos + marginX;
-        }
-        
-        if (topPos + previewHeight + marginY > viewportHeight) {
-            topPos = topPos - previewHeight - marginY;
-        } else {
-            topPos = topPos + marginY;
-        }
-        
-        // Set preview container dimensions and position
-        previewContainer.style.width = `${previewWidth}px`;
-        previewContainer.style.height = `${previewHeight}px`;
-        previewContainer.style.left = `${leftPos}px`;
-        previewContainer.style.top = `${topPos}px`;
-        previewContainer.style.transform = 'none'; // Remove any transform that might interfere
-    }
-    
-    imageUrls.forEach((url, index) => {
-        const gridItem = document.createElement('div');
-        gridItem.className = 'grid-item';
-        
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = `<Image_Placeholder> ${index + 1}`;
-        img.loading = 'lazy';
-        
-        gridItem.appendChild(img);
-        imageGrid.appendChild(gridItem);
-        
-        // Click handler for full-screen preview
-        gridItem.addEventListener('click', function() {
-            this.classList.add('active');
-            setTimeout(() => this.classList.remove('active'), 300);
-            
-            // Show full image on click
-            previewImg.src = url;
-            previewContainer.classList.add('fullscreen-preview');
-            previewContainer.style.display = 'flex';
-            previewContainer.style.left = '50%';
-            previewContainer.style.top = '50%';
-            previewContainer.style.transform = 'translate(-50%, -50%) scale(0.9)';
-            previewContainer.style.opacity = '0';
-            
-            setTimeout(() => {
-                previewContainer.classList.add('active');
-                previewContainer.style.transform = 'translate(-50%, -50%) scale(1)';
-                previewContainer.style.opacity = '1';
-            }, 10);
-        });
-        
-        // Hover handler for preview that follows cursor
-        gridItem.addEventListener('mouseenter', function(e) {
-            isHovering = true;
-            currentHoveredItem = this;
-            previewImg.src = url;
-            
-            // Clear any existing hover timer
-            clearTimeout(hoverTimer);
-            
-            // Show preview after a short delay
-            hoverTimer = setTimeout(() => {
-                if (isHovering) {
-                    previewContainer.classList.remove('fullscreen-preview');
-                    previewContainer.style.display = 'flex';
-                    previewContainer.style.opacity = '0';
-                    
-                    // Initial positioning
-                    updatePreviewPosition(e, this);
-                    
-                    // Fade in with animation
-                    setTimeout(() => {
-                        previewContainer.classList.add('active');
-                        previewContainer.style.opacity = '1';
-                    }, 10);
+            clearTimeout(lastFunc);
+            lastFunc = setTimeout(() => {
+                if (Date.now() - lastRan >= limit) {
+                    func.apply(context, args);
+                    lastRan = Date.now();
                 }
-            }, 300); // Reduced delay for better responsiveness
-        });
-        
-        // Move preview with cursor
-        gridItem.addEventListener('mousemove', function(e) {
-            if (isHovering && this === currentHoveredItem) {
-                updatePreviewPosition(e, this);
-            }
-        });
-        
-        // Hide preview on mouse leave
-        gridItem.addEventListener('mouseleave', function() {
-            isHovering = false;
-            currentHoveredItem = null;
-            clearTimeout(hoverTimer);
-            
-            // Only hide if it's not in fullscreen mode
-            if (!previewContainer.classList.contains('fullscreen-preview')) {
-                previewContainer.classList.remove('active');
-                setTimeout(() => {
-                    if (!isHovering) {
-                        previewContainer.style.display = 'none';
-                    }
-                }, 300);
-            }
-        });
-    });
-    
-    // Close preview when clicking outside
-    previewContainer.addEventListener('click', function(e) {
-        if (e.target === this || e.target === previewImg) {
-            this.classList.remove('active');
-            this.classList.remove('fullscreen-preview');
-            setTimeout(() => {
-                this.style.display = 'none';
-            }, 300);
+            }, limit - (Date.now() - lastRan));
         }
+    };
+}
+
+// Utility: Update preview position smoothly
+const updatePreviewPosition = throttle((e) => {
+    const { clientX: mouseX, clientY: mouseY } = e;
+    const { innerWidth: viewportWidth, innerHeight: viewportHeight } = window;
+
+    const previewWidth = Math.min(400, viewportWidth * 0.4);
+    const previewHeight = Math.min(400, viewportHeight * 0.4);
+
+    const margin = 20;
+    const left = mouseX + previewWidth + margin > viewportWidth
+        ? mouseX - previewWidth - margin
+        : mouseX + margin;
+    const top = mouseY + previewHeight + margin > viewportHeight
+        ? mouseY - previewHeight - margin
+        : mouseY + margin;
+
+    previewContainer.style.width = `${previewWidth}px`;
+    previewContainer.style.height = `${previewHeight}px`;
+    previewContainer.style.transform = `translate(${left}px, ${top}px)`;
+}, 16); // Throttle to 60 FPS
+
+// Utility: Show preview
+function showPreview(url, e) {
+    previewImg.src = url;
+    previewContainer.classList.remove('hidden');
+    updatePreviewPosition(e);
+}
+
+// Utility: Hide preview
+function hidePreview() {
+    previewContainer.classList.add('hidden');
+}
+
+// Add images to the grid and attach event listeners
+imageUrls.forEach((url, index) => {
+    const gridItem = document.createElement('div');
+    gridItem.className = 'grid-item floating';
+
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = `Image ${index + 1}`;
+    img.loading = 'lazy';
+
+    gridItem.appendChild(img);
+    imageGrid.appendChild(gridItem);
+
+    // Hover events
+    gridItem.addEventListener('mouseenter', (e) => {
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(() => showPreview(url, e), 100); // Debounced hover
     });
-    
-    // Close preview with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && previewContainer.classList.contains('active')) {
-            previewContainer.classList.remove('active');
-            previewContainer.classList.remove('fullscreen-preview');
-            setTimeout(() => {
-                previewContainer.style.display = 'none';
-            }, 300);
-        }
+
+    gridItem.addEventListener('mousemove', updatePreviewPosition);
+
+    gridItem.addEventListener('mouseleave', () => {
+        clearTimeout(hoverTimer);
+        hidePreview();
     });
-    
+
+    // Click event for fullscreen preview
+    gridItem.addEventListener('click', () => {
+        previewImg.src = url;
+        previewContainer.classList.add('fullscreen');
+        previewContainer.classList.remove('hidden');
+    });
+});
+
+// Close preview on click outside or Escape key
+previewContainer.addEventListener('click', (e) => {
+    if (e.target === previewContainer || e.target === previewImg) {
+        previewContainer.classList.remove('fullscreen');
+        hidePreview();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !previewContainer.classList.contains('hidden')) {
+        previewContainer.classList.remove('fullscreen');
+        hidePreview();
+    }
+});
     // Dice Section
     const diceResult = document.getElementById('dice-result');
     const rollBtn = document.getElementById('roll-btn');
