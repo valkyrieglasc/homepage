@@ -64,11 +64,20 @@
             
                 <div class="music-container">
                     <div class="now-playing">Now Playing: <span id="current-song-title">None</span></div>
-                    <iframe id="yt-player" width="100%" height="0" style="border: none;" allow="autoplay" allowfullscreen></iframe>
+                    <iframe
+                        width="560"
+                        height="315"
+                        id="yt-player"
+                        src=""
+                        allow="autoplay; encrypted-media; picture-in-picture; pause"
+                        allowfullscreen
+                        class="themed-yt-iframe"
+                        style="background: transparent;"
+                    ></iframe>
             
                     <div class="controls">
                         <button id="prev-btn" class="cyber-button">⟵ Prev</button>
-                        <button id="play-btn" class="cyber-button">⏯ Play/Pause</button>
+                        <button hidden id="play-btn" class="cyber-button">⏯ Play/Pause</button>
                         <button id="next-btn" class="cyber-button">Next ⟶</button>
                         <button id="loop-btn" class="cyber-button">🔁 Loop</button>
                     </div>
@@ -77,6 +86,15 @@
                         <input type="text" id="youtube-url" placeholder="Paste YouTube URL or ID..." />
                         <input type="text" id="youtube-title" placeholder="Custom Title (optional)" />
                         <button id="add-song-btn" class="cyber-button">+ Add Song</button>
+                        <!-- Add this inside your music player section -->
+                    <div class="volume-control">
+                        <label for="volume-slider">Volume:</label>
+                        <input type="range" id="volume-slider" min="0" max="100" value="100">
+                    </div>
+
+                    <div id="queue-container" class="queue-container">
+                        <!-- Queue items will be added here dynamically -->
+                    </div>
                     </div>
                 </div>
             </div>
