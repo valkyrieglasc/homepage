@@ -701,7 +701,7 @@ const queueContainer = document.getElementById('queue-container');
 let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
 let currentIndex = 0;
 let isLooping = false;
-let playerVolume = 100;
+let playerVolume = 50;
 
 function savePlaylist() {
     localStorage.setItem('playlist', JSON.stringify(playlist));
