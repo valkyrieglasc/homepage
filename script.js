@@ -162,6 +162,123 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Terminal commands
+    async function loadAsciiArt(artName) {
+        try {
+            const response = await fetch(`ascii_art/${artName}.txt`);
+            if (!response.ok) return null;
+            const text = await response.text();
+            
+            // Match content between backticks
+            const frames = text.match(/`([^`]+)`/g);
+            
+            if (frames && frames.length > 0) {
+                // Remove backticks and clean up each frame
+                return frames.map(frame => frame.replace(/^`|`$/g, '').trim());
+            } else {
+                // Fallback to the old method for backwards compatibility
+                return text.split('\n\n').map(frame => frame.trim()).filter(frame => frame);
+            }
+        } catch (error) {
+            console.error('Error loading ASCII art:', error);
+            return null;
+        }
+    }
+
+    async function displayAsciiArt(artName) {
+        const frames = await loadAsciiArt(artName);
+        if (!frames) return false;
+
+        const artContainer = document.createElement('div');
+        artContainer.classList.add('ascii-container');
+        
+        const artDisplay = document.createElement('pre');
+        artDisplay.classList.add('ascii-animation');
+        artDisplay.classList.add('size-md');
+        artDisplay.style.display = 'block';
+        artDisplay.style.whiteSpace = 'pre';
+        artDisplay.textContent = frames[0];
+        
+        const controls = document.createElement('div');
+        controls.classList.add('ascii-controls');
+        
+        // Frame counter display
+        const frameCounter = document.createElement('div');
+        frameCounter.classList.add('ascii-frame-counter');
+        frameCounter.textContent = `Frame: 1/${frames.length}`;
+        
+        // Add timing control
+        const speedControl = document.createElement('div');
+        speedControl.classList.add('ascii-speed-control');
+        const speedSlider = document.createElement('input');
+        speedSlider.type = 'range';
+        speedSlider.min = '50';
+        speedSlider.max = '500';
+        speedSlider.value = '100';
+        speedSlider.className = 'ascii-speed-slider';
+        const speedLabel = document.createElement('span');
+        speedLabel.textContent = 'Speed: ';
+        speedControl.appendChild(speedLabel);
+        speedControl.appendChild(speedSlider);
+        
+        // Size controls
+        const sizes = ['xs', 'sm', 'md', 'lg', 'xl'];
+        sizes.forEach(size => {
+            const btn = document.createElement('button');
+            btn.classList.add('ascii-size-btn');
+            btn.textContent = size.toUpperCase();
+            if (size === 'md') btn.classList.add('active');
+            
+            btn.addEventListener('click', () => {
+                sizes.forEach(s => {
+                    artDisplay.classList.remove(`size-${s}`);
+                    controls.querySelector(`button:nth-child(${sizes.indexOf(s) + 1})`).classList.remove('active');
+                });
+                artDisplay.classList.add(`size-${size}`);
+                btn.classList.add('active');
+            });
+            
+            controls.appendChild(btn);
+        });
+        
+        artContainer.appendChild(artDisplay);
+        controls.appendChild(speedControl);
+        controls.appendChild(frameCounter);
+        artContainer.appendChild(controls);
+        
+        let frame = 0;
+        let frameInterval = parseInt(speedSlider.value);
+        let animationInterval;
+
+        const updateAnimation = () => {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+            }
+            animationInterval = setInterval(() => {
+                frame = (frame + 1) % frames.length;
+                artDisplay.textContent = frames[frame];
+                frameCounter.textContent = `Frame: ${frame + 1}/${frames.length}`;
+            }, frameInterval);
+        };
+
+        // Start initial animation
+        updateAnimation();
+
+        // Update animation speed when slider changes
+        speedSlider.addEventListener('input', (e) => {
+            frameInterval = parseInt(e.target.value);
+            updateAnimation();
+        });
+
+        // Clean up when animation is stopped
+        setTimeout(() => {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+            }
+        }, 300000); // 5 minutes timeout
+        
+        return artContainer;
+    }
+
     function processCommand(command) {
         if (!command.trim()) return;
         
@@ -170,8 +287,9 @@ document.addEventListener('DOMContentLoaded', function() {
         consoleOutput.appendChild(output);
         
         const response = document.createElement('div');
+        const [cmd, ...args] = command.toLowerCase().split(' ');
         
-        switch(command.toLowerCase()) {
+        switch(cmd) {
             case 'help':
                 response.innerHTML = `<span class="prompt">></span> <b>ദി ˉ͈̀꒳ˉ͈́ )✧</b> <i>Available commands:</i><br>
                 <span class="prompt">></span> - help: Show this help<br>
@@ -180,195 +298,73 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span class="prompt">></span> - date: Show current date/time<br>
                 <span class="prompt">></span> - fullscreen: Toggle fullscreen mode<br>
                 <span class="prompt">></span> - glitch: Execute visual glitch effect<br>
-                <span class="prompt">></span> - ascii: Show available ASCII art`;
+                <span class="prompt">></span> - ascii [name]: Show ASCII art animation`;
+                consoleOutput.appendChild(response);
                 break;
+                
+            case 'ascii':
+                if (args.length > 0) {
+                    const artName = args[0];
+                    displayAsciiArt(artName).then(artDisplay => {
+                        if (artDisplay) {
+                            response.innerHTML = `<span class="prompt">></span> Displaying ASCII art: ${artName}`;
+                            consoleOutput.appendChild(response);
+                            consoleOutput.appendChild(artDisplay);
+                        } else {
+                            response.innerHTML = `<span class="prompt">></span> ASCII art not found: ${artName}<br>
+                            <span class="prompt">></span> Available options: chiikawa, hachiware, usagi, stocking, bad_apple`;
+                            consoleOutput.appendChild(response);
+                        }
+                    });
+                } else {
+                    response.innerHTML = `<span class="prompt">></span> <b>ദ്ദി ˉ͈̀꒳ˉ͈́ )✧</b>  <i>Available ASCII art:</i><br>
+                    <span class="prompt">></span> ✦ chiikawa | hachiware | usagi<br>
+                    <span class="prompt">></span> ✦ stocking<br>
+                    <span class="prompt">></span> ✦ dick<br>`;
+                    consoleOutput.appendChild(response);
+                }
+                break;
+                
+            case 'clear':
+                playDiceSound();
+                consoleOutput.innerHTML = '';
+                return;
+                
+            case 'date':
+                updateVietnamTime();
+                response.innerHTML = `<span class="prompt">></span> ⌚ ┃ <b>${document.getElementById('datetime').textContent}</b>`;
+                consoleOutput.appendChild(response);
+                break;
+                
+            case 'fullscreen':
+                playDiceSound();
+                toggleFullscreen();
+                response.innerHTML = `<span class="prompt">></span> Fullscreen mode toggled`;
+                consoleOutput.appendChild(response);
+                break;
+                
+            case 'glitch':
+                playTerminalSound();
+                triggerGlitchEffect();
+                response.innerHTML = `<span class="prompt">></span> Visual glitch effect executed`;
+                consoleOutput.appendChild(response);
+                break;
+                
             case 'about':
                 response.innerHTML = `<span class="prompt">></span> ╭────────────────────────────────────────────────╮<br>
                 <span class="prompt">></span> ┃ <strong>❤︎ THE_GLASC://KYRIE</strong><br>                                
                 <span class="prompt">></span> ┃ Made by <i>@valkyrie_glasc</i><br>      
                 <span class="prompt">></span> ┃ Sections: <u>[HOME]</u> <u>[GALLERY]</u> <u>[DICE]</u><br>
                 <span class="prompt">></span> ╰────────────────────────────────────────────────╯`;
+                consoleOutput.appendChild(response);
                 break;
-            case 'ascii':
-                response.innerHTML = `<span class="prompt">></span> <b>ദ്ദി ˉ͈̀꒳ˉ͈́ )✧</b>  <i>Available ASCII art:</i><br>
-                <span class="prompt">></span> ✦ chiikawa | hachiware | usagi<br>
-                <span class="prompt">></span> ✦ stocking<br>
-                <span class="prompt">></span> ✦ dick<br>
-                <span class="prompt">></span> ✦ stocking`;
-                break;
-            case 'clear':
-                playDiceSound();
-                consoleOutput.innerHTML = '';
-                return;
-            case 'date':
-                updateVietnamTime();
-                response.innerHTML = `<span class="prompt">></span> ⌚ ┃ <b>${document.getElementById('datetime').textContent}</b>`;
-                break;
-            case 'fullscreen':
-                playDiceSound();
-                toggleFullscreen();
-                response.innerHTML = `<span class="prompt">></span> Fullscreen mode toggled`;
-                break;
-            case 'glitch':
-                playTerminalSound();
-                triggerGlitchEffect();
-                response.innerHTML = `<span class="prompt">></span> Visual glitch effect executed`;
-                break;
-            case 'chiikawa':
-                response.innerHTML = `⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⣉⠙⠻⣿⠿⠛⠛⠉⠉⣉⣉⣉⣉⣉⠉⠙⠛⠛⠿⢿⡿⠛⢁⣈⡉⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⢰⣿⣿⣷⠀⢠⣴⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣦⣄⠀⣰⣿⣿⣿⡀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⠘⣿⣿⣿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣿⣿⣿⡿⠀⠰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⣡⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣦⡀⠙⢿⣿⣿⣿⣿⣿⠿⠿⢿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⣰⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠈⢿⠛⠛⠿⠃⠠⣦⡀⢹⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⢀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⠈⣿⣷⣶⣦⣄⠁⠠⣾⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⡿⠀⣾⣿⣿⣿⣿⣿⣿⣿⣿⠏⠉⠉⢹⣿⣿⣿⣿⣿⣿⣿⡏⠹⠹⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣀⣸⣿⣿⣿⣿⣷⡀⠸⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⡇⢐⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡀⠘⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⠁⢸⣿⣿⣿⣿⣿⣿⣿⣿⡟⠉⢀⡉⠛⣿⣿⣿⣿⣿⣿⣿⡟⠋⡉⠙⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡀⢸⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⡄⢸⣿⣿⣿⡿⣟⢻⡛⣛⠇⠀⢉⠡⠀⣿⣿⣿⣿⣿⣿⣿⡀⠈⡉⡁⠀⣻⠿⡿⣿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⣻<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⡇⠈⣿⣿⡿⢊⠄⢁⠉⡐⢑⣶⣤⣴⣾⣿⣿⣿⣿⣿⣿⣿⣷⣤⣤⣤⣞⠇⠩⠓⠊⡙⢒⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢀⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⠹⣿⣿⣮⣙⣎⣳⣀⣶⣿⣿⣿⣿⣿⠉⠻⠀⠹⠟⢻⣿⣿⣿⣿⣧⡨⠅⣜⣠⠀⢎⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⢸⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡘⠂⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⣿⣿⣿⣿⣏⡀⠻⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣀⠙⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣦⠈⠹⠿⠿⠿⠛⢀⣽<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⡈⠙⠛⠛⠻⠿⠿⠿⠿⠿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠿⠿⠿⠛⠿⠛⠛⠛⠛⠛⠛⠋⣁⣴⣿⣶⣶⣶⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣶⣶⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣴⣶⣶⣶⣶⣶⣷⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿`
-                break;
-            case 'hachiware':
-                response.innerHTML = `⣿⣿⣿⣿⣿⣿⠟⠁⠈⢻⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⣿⣿⣿⣿<br>
-                ⣿⣿⣿⣿⣿⡏⠂⠂⠂⠂⢙⠛⠙⠛⠻⢿⠟⠁⠂⠂⠸⣿⣿⣿<br>
-                ⣿⣿⣿⡿⠟⠂⠂⠂⠂⠂⠂⠂⠂⠂⠂⠂⠂⠂⠂⠂⠂⣿⣿⣿<br>
-                ⣿⡿⢋⣴⣤⣀⣀⣀⣀⣠⣤⣾⣷⣤⣀⠂⠂⠂⠂⠂⠂⢿⣿⣿<br>
-                ⣿⢁⣿⣿⣿⣿⣿⣿⣯⣽⣿⣿⣿⣿⣟⣿⣶⣦⣤⣤⣤⣦⠹⣿<br>
-                ⡇⣼⣿⣿⣿⣿⣿⢋⣭⠹⣿⣿⣿⣿⠟⡛⢿⣿⣿⣿⣿⣿⣇⢸<br>
-                ⠁⣿⣿⡟⡛⠛⢿⣄⣂⣴⣿⣿⣿⣿⡀⠉⢠⣿⣿⣿⣿⣿⣿⠂<br>
-                ⡇⢻⣿⣷⣿⣿⣾⣿⣿⣿⣙⠁⠛⣻⣿⣿⣣⣃⢉⢹⣿⣿⡟⢸<br>
-                ⣿⡌⢻⣿⣿⣿⣿⣿⣿⣿⣿⣍⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢁⣾<br>
-                ⣿⡘⠦⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⣡⣾⣿`;
-                break;
-            case 'usagi':
-                response.innerHTML = `<p style="font-size:10px">⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⢁⣠⣦⠀⣿⡿⠋⣠⣴⡄⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⣠⣿⣿⡏⢠⠟⢁⣼⣿⣿⠃⣸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⣼⣿⣿⣿⠀⡜⢠⣾⣿⣿⡏⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⢰⣿⣿⣿⠇⣸⠁⣿⣿⣿⣿⠀⠆⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠀⣿⣿⣿⡟⢀⠇⢸⣿⣿⣿⠇⢰⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⣿⣿⣿⠁⢸⠀⣿⣿⣿⡏⢀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⠀⣿⣿⣿⠀⣿⠀⣿⣿⣿⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⠀⢹⣿⣿⠀⣶⠀⣿⣿⣿⢰⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠟⢆⣈⣿⣿⣄⣠⣤⣿⣿⣿⣤⣀⣈⣉⡉⠛⠻⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠃⠁⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣤⣀⠉⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⢀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠛⣛⡛⠿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠉⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⠋⢀⣴⣿⣿⣿⢟⣭⣶⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣝⢿⣿⣿⣿⣿⣿⣿⣿⣷⣄⠈⠻⣿⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⡏⠁⣠⣿⣿⣿⡿⢡⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄⠻⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⡿⠁⣴⣿⣿⣿⣿⢃⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣖⡈⢻⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⠁⢰⣿⣿⣿⣿⣿⣿⣿⡿⠋⣡⣈⠹⣿⣿⣿⣿⣿⣿⡟⢁⣤⡄⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⢸⣿⣿⣿<br>
-⣿⣿⣿⣿⠀⣾⣿⣿⣿⣿⣿⣿⣿⣇⠀⣉⡉⠀⣿⣿⣿⣿⣿⣿⣇⠀⠉⠅⢀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠌⣿⣿⣿<br>
-⣿⣿⣿⣿⠀⣿⣿⣿⣿⣫⡭⢹⡿⣽⡳⣶⣶⣾⡿⣿⡏⠹⣿⡟⢿⣷⣶⣶⣿⠛⣿⠃⡖⢰⡊⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⢧⠀⣿⣿⣿<br>
-⣿⣿⣿⣇⠀⢿⣿⣿⣇⣄⢀⣾⣰⣇⡐⣸⣿⣿⣧⣌⠁⠀⠉⢡⣼⣿⣿⣿⣷⢸⣇⣴⣇⡼⡤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⣿⣿⣿<br>
-⣿⣿⣿⣿⡄⠘⣿⣿⣿⣿⣯⣭⣭⣽⣾⣿⣿⣿⣿⣿⡄⢀⢠⠈⣿⣿⣿⣿⣿⣷⣶⣶⣶⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣷⡀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠈⠹⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⢠⣼⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣷⡀⠈⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠉⢶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⢀⣾⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣦⡀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⢀⣾⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣤⡽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⢹⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣍⠋⠠⠔⢀⣡⣤⣴⠤⠈⢙⣛⣉⣿⣿⣿⣿⣿⣿⡇⠈⣿⣿⣿⣿⣿⣿<br>
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠘⣿⣿⣿⣿⣿⣿⣿⠙⠿⠻⢿⣷⣶⣾⠿⠟⠋⣠⣴⣿⣿⠿⠟⢛⣿⣿⣿⣿⣿⡇⠀⣿⣿⣿⣿⣿⣿</p>`;
-                    break;
-                case 'dick':
-                    response.innerHTML = `<p style="font-size:2px">
-...........:xxxxxxxxxxxXXXXXX$$$$$$$$$$$$$$$$$$$$$$$$$X$X$$$X..................................................................................<br>
-.......:::....xxxxxxxXXXXX$$$$$$$$$$$&&&&&&&&&&&&&&&&$$$XX$$$$.................................................................................<br>
-:::::::::::::.::xxxXXXX$$$$$$$$$$$&&&&&&&&&&&&&&&&&&&&&$$$$$$$$.:..............................................................................<br>
-:::::::::::::::::;xXXXX$$$$$$&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&$&&.::...............&............................................................<br>
-:::::::::::::::::::+xXXX$$$&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&:::::..............$..........................................................<br>
-:::::::::::::::::::::xXXX$$&&&&&&&&&&&&&&&&&&&&&&&&&&&&&;.;&&&&&&.:::::...............:........................................................<br>
-:::::::::::::::::::::;XXX$&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&:::::::......................................................................<br>
-:::::::::;:;;;;;;;;;;:+$$$&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&.:;;;:::.............................&...:;...............&..................<br>
-:::::::;;;++++++++++++x&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&::;;;;:::.........................+:......&.....&.::.+$&..:.&&&&.&...........<br>
-::::::;;+++++++xxxxxxxX&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&;;:&&&&&;;;;;;::..................:..;:.............................................<br>
-::::::;++++++xxxxxxxxxX&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&;+;::&&&;;+xxX;;:...................................................................<br>
-:::::;;++++++xxxxxxxxxx&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&+x+xx&&&:XXXXXXXX&.......................................;..............&...........<br>
-:::::;;++++++xxxxxxxxxx&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&;Xxxxxx;.XXXXXXXXX&&..........................&...:&.....&&&x....&;.+.&X&...........<br>
-::::::;;++++xxxxxxxxxxx&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&;xx+:;++xxXXXXXXXXX$$&..............:..&...:....:....................+...............<br>
-..:::::;;+++xxxxxxxxxxxX&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&:+xxx+x+++x:XXXXXXXXXXX&..............................................................<br>
-........:;+++xxxxxxxxxxX&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&:+++xxxxxxxxxxxx:XXXXXXXX&&.............................................................<br>
-..........:;++++xxxxxxxX&&&&&&&&&&&&&&&&&&&&&&&&&&&&&+xxxxxxxxxxxx;:::.XXXXXXXXX$&:............................................................<br>
-...........::;;xxxxxxxxX&&&&&&&&&&&&&&&&&&&&&&&&&&&&:::xxxxxxxxxxx+:.+XXXXXXXXXX$&&............................................................<br>
-::::::::::::::::+++xxXXxx&&&&&&&&&&&&&&&&&&&&&&&&&&&xxxxxxxxxx+xxx:;xxxxx+XXXXXX$$&............................................................<br>
-::::::::;+xxxxxX:;;+++xxxx&&&&&&&&&&&&&&&&&&&&&&&&;xXxxxxxxxx:+;::::x.+xXXXXX$XX++&............................................................<br>
-::::::::;+xxxxxXX$&;+xx+++x&&&&&&&&&&&&&&&&&&&&:::::xxx++x+:;:.::::..+XXXXXXXXX$$Xx&:..........................................................<br>
-::::::::;++xxxXXX$&&&&xxx+++&&&&&&&&&&&&&&&&:::::::;+:::x:::;::..;;;+XXXXXXXXXXXXXXX&..........................................................<br>
-:::::::::++xxxxXXX&&&&&&&;+++X&&&&&&&&&&&&&&&:;:;::::::::::;:::::..+xXXXXXXXXXXxXXXXX&X........................................................<br>
-:::::::::++xxxxX$XX&&&&&&&&&:;$X&&&&&&&&&&&x;::;;;;;::::::::::..x;++xXXXXXXXXXXXX;xX$X&&.......................................................<br>
-:::::::::++xxxxxX&&&&&&&&&&&&&&&&;.;&&&&&&.::::::::::+;+::::::..;$:+xxXXXXXXXXXXXX;$X$$X&&&....................................................<br>
-:::::::::+++xxxx$$$&&&&&&&&&&&&&&&&&&::::::::::::::;xxxx;..:...:::.xxxxXXXX+::;;+x+XX$X$$X$Xx..................................................<br>
-:::::::::+++xxXXX$$$$&&&&&&&&&&&&&&&&&:;::+::::::;xx+..:;;;;;;;:;;;:xxxxxxxXx+++++x&&&&&$$$$&..................................................<br>
-:::::::::;++xxXXX$$$$$&&&&&&&&&&&&&&&&&+++;++;;:x:;++;;;;;x+xx;+;;;;:&xxxxxXXXXx++X&&&$::&$$$&......X..&;X.....................................<br>
-:::::::::;++xxxXX$$$$$$X&&&&&&&&&&&&&&&;xxx++++xxxx:;x;:+++++++++++;;;::&&XXXXXXXXX.::::x:::&&&&&&&&;........:&................................<br>
-::::::::::++xxxxX$$$$$$$XX&&&&&&&&&&&&&$&&xxx++x+xxx;X+:++++;+++++x++;;::.&&XXXX:;;x:::::::&&:::++x;&&&&&&........&............................<br>
-::::::::::;++xxxx$$$$$$$$$$&&&&&&&&&&&&&&&;xx&+:+:+;+x;+;xxx&+;+xxxxx++&;::&&&XX:x;x;::;;:::::&;;;;+++xxx&&&&&&&...............................<br>
-:::::::::::++xxxxx$$$$$$$&&XX&&&&&&&&&&&&&.+&&:+;;;;++;&x;;:x&x;xxxxX++&;;:;;&&&X;;+x;;;;;;;;::;&++++++++xxXXX$&&&$............................<br>
-:::::::::::;++xxxxX$$$$$$$&$XX&&&&&&&&&&&&&&&&:::+:;;++;;++;+xx;xXX$$.xx&+++;+x;:;;Xx:+;+;;;;;;;:Xx+$+xxxxxxXx$$X&&&&&;&&&&&..&................<br>
-::::::::::::++xxxxx$$$$$$$$&$XX&&&&&&&&&x&&&&&&::::;;;;;;;+++xx:X$$$$++xX&+++X++++x++x+++++++++;;:;$x&+xxxxXXxX&x$&X$X&&&&&&&&x...$............<br>
-::::::::::::;+xxxxxx$$$$$$$&$XXX&&&&&&&&&X&&&&&.:::;:;;;;;;;;+&++XX$$.;&&xx&&&;xxxxxx++xx++++++xxx+;Xx&$X$XX$xX&x$$+&&&&&&&&&&&&&&....x........<br>
-:::::::::::::++xxxxxX$$$$$$$XXXXX&&&&&&&&&&&&&&x::::::::::;;;;:+&&&x&xxx;xX+xXX&;xxxxXXxxxx++xxX$$$:&x$&&$$X&X$$X&$+&&&&&&&&&&&&&&&&&&...;.....<br>
-:::::::::::::++xxxxxxX$$$$$$XXXX$X&&&&&&&&X&&&&&..:::::::::::;;;::;;+.:XXXXXX$xx&x;xxX$$$$$$&&&&&&&:$&+&&&&&&X$&X&&X&&&&&&&&&&&&&&&&&&&&.......<br>
-::::::::::::::++xxxxxX$$$$$$XXXXXXX&&&&&&&&&&&&&+:::::::::::::;;;;;+x&x++++xxXXx+X&+xxxxX&&&&&&&&&&+$&X&&&&&&X&&$x&$&&;&&&&&&&&&&&&&&&&&&&.....<br>
-::::::::::::::+++xxxxX$$$$$$xXXXXXXX&&&&&&&+&&&&&.:::::::::::::::;::;Xx+&&&&&+xxx:x&&;;xxxxxxxX&&.$X&&&&X&&&&&$&&x&&&&&&&&&&&&&&&&&&&&&&&&&....<br>
-::::::::::::::;+++xxxxX$$$$XxXXXXXXXX$&&&&&&&&&&&;::::.:.::::::::::::;+;;++++&&&xxx;xX&$x:::::x$&&&XXXX&&&$X&&$&&&&&&&&&&&&&&&&&&&&&&&&&&&&&...<br>
-:::::::::::::::++++xxxXX$$$XxxXXXXXXXXX&&&&&&&&&&&.;;::::..:::::::::::::::;;+;;$&&&+;+xxX&&&XXx:+XX$$$$$&x$&&XX&&&x&&&&$$&&&&&&&&&&&&&&&&&&&&..<br>
-:::::::::::::::;+++xxxxxX$XXxxXxXXXXXXx&&&&&$&&&&&x&$+;::::::::::::::::::::X;;;;;+;+++::xx$x:XX$$$$$$$$$$$$$xX&&&&X$&&&x$&&&&&&&&&&&&&&&&&&&&..<br>
-::::::::::::::::++++xxxxXXXXxx+XxXXXXXXx&&&&$&&&&&&x&&$+;;::::::::::::::::::$;::;;;;;+++:xx:+xX$$$$$$$$$$$$$$$$;&&&x$&&+$&&&&&&&&&&&&&&&&&&&&;.<br>
-::::::::::::::::;++++xxxXXXXxxxxxxXXXXXX&&&&$&&&&&&&&&&&&X+;;;::::::::::::::::;::::;;;;+:+x;xxxxxxxxXX$$$$$$$$$$xX$$x$&:X&&&&&&&&&&&&&&&&&&&&:.<br>
-:::::::::::::::::;;++xxxXXXXXxx+xxXXXXXxx&&&&&&&&&&&$&&&&&&&X.....::::::::;+;+::;::::::;;:x+;++xxxxxxxxxx$$$$$$$x+x$XXXxxX&&&&&&&&&&&&&&&&&&&..<br>
-::::::::::::::::::;;+xxxXXXXXxx++xXXXXXxx&&&&&&&&&&&&&&&&&&&&..........::;;;;;;++;;:::::::::xx:;+++++++xxx+++xXx+++xx+xxxXX&&&&&&&&&&&&&&&&&x..<br>
-:::.:::::::::x::::;;;+xxxxxxXxx+x+xXXXXxx&&+&&&&&&&&&&X&&&&&&&+............:;;;;;;;;;;::::::::&+;;;;;+;;;;xx+++++++++x+XxxxXX&&&&&&&&&&&&&&+x..<br>
-:::::::::::::::::::;;;xxxxxxX+++;++XXXxx+&&:&&&&&&&&&&&x&&&&&&&:::.::::::+&x...;;;;;;;;;;;:::::+x:;;;::;;;++;;;;+++;;+x+X;xxXXX&&&&&&&&&$X:$&..<br>
-::::::::::::::::::::;;+xxxxxx+++:++xXX+++&:&&&x&&&x&&&&&;$&&&x&&X.::::::::::::.&:..;+++++++;;::;:x+;;;;;;;;;;;;;;;;;;;+++:xXxxXXXX$$$Xxxx.&&:::<br>
-:::::::::::::::::::::::+xxxxx++++;++XX++x+.&&&&&&&&&&&&&&&&x&&X&&&::::::::::::::::::.&..++xxxxxxxx+x+++++++x++++;;;;;;;+x++.xxxxxxxxxxx.&x&::::<br>
-::::::::::::::::::::::::;xxxx+++;;;+x+++x.&&&&&&&&&&&&&&&&&&&&&&&&&&&&:::::::::::::::::::...:xxxxxxxxx++x++++++++++++++++++++:.:;;:.:&&x$::::::<br>
-::::::::::::::::::::::::;;;;;+;;;;;+x;;;.&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&:::::::::::::::::&&&&&::..:+:+xxxxxxxxxx+:..::::::::;::::;:::&&X::::::<br>
-:::::::::::::::.::::::;:::::::;;:;;;;;;.X&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&$.:::::::::::::::::::::::::;;:;;;::;;;;;;::+&XX:::::;;;;;;;:$&;::::::<br>
-:::::::::::::::::::::::::::::::::;;;;;.;&&&&&&&&&&&&&&&&&&&&&&&&&&&x&&&&&&&&.::::::::::::::::::::::;;;;;;::::;;;;;;;;;;;;;;;;;;;;;;;;:&&x::::::<br>
-::::::::::::::::::::::::::::::::;;;;;::&&&&&&&&&&&&&&&&&&&&&&&&&&&&&;&&&&&&&&.:::::::::::::::::;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:&&$::::::<br>
-:::::::::::::::::::::::::::::::::;;;;.&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&:&&&&&&&&:::::::::::::::::::::;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:$&x::::::<br>
-:::::::::::::::::::::::::::::::::;;:;:&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&:&&&&&&&.:::::::::::::::::::::;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;::::::::</p>`;
-                    break;
-                case 'stocking':
-                    response.innerHTML = `<p style="font-size:10px">⠀⢀⣀⣀⣤⠄⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣦⠀⠀⠀⠀⠀⣀⣴⣶⣿⣿<br>
-⣾⣿⣿⣿⠫⣺⡟⢹⣿⣿⣿⠿⠿⠛⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⣿⠇⠀⠀⠀⣰⣿⣿⣿⣿⣿<br>
-⣿⣿⡿⠁⠑⡟⣼⡑⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣶⣿⣿⣿⣿⣿⣿⠟⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿<br>
-⣿⣿⠣⠞⠀⠼⢿⣿⣶⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢀⣤⣶⣿⣿⣿⡛⣿⣿⣿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠈⠙⠿⠿⣿<br>
-⣿⠃⠀⠀⠀⠀⠀⠈⠛⢿⣿⣿⣿⣿⣶⣶⠂⠀⢀⣤⣤⣤⣤⣤⣤⣤⣤⣶⣶⣾⣿⠚⣿⣿⣿⣿⠿⠗⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀<br>
-⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠙⠛⠿⠟⠀⠀⠾⠛⠛⠻⠿⠇⠿⠿⠿⠿⠟⠛⠛⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡄⠀⠀⠀⠀⠀⠀⢂⠀⠀⠀⠀⠀⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣷⡀⠀⠀⠀⠀⠀⠀⢦⠀⠀⠀⠀⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠀⠀⠀⠀⠀⠀⠀⠀⢿⣧⠀⠀⠀⠀⠀⠀⠈⣧⠀⠀⠀⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡆⠀⠀⠀⠀⠀⠀⢸⣧⠀⠀⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠀⢸⠿⠓⠀⠀⠀⠀⠀⠀⠀⢿⣧⠀⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠀⠐⠊⠁⠀⠀⠀⠲⠆⣤⣄⣠⣝⢆⠀<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠃⠀⠀⡄⠀⠀⠀⠀⢀⢀⣜⣘⣀⣤⣤⣤⣶⣶⡗⠀⠀⠠⠔⣂⣓⡀⣶⠀⣿⣿⣿⣿⣷⣄<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡼⠀⠀⠠⠀⠀⠀⠀⠈⠡⢴⣿⣿⣿⣿⣿⣿⢿⠿⢆⡄⠀⠀⢠⣿⠯⣵⡇⢃⢻⣿⣿⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡰⠃⠀⠀⢀⡴⠖⢤⣃⠘⡶⡲⠿⣟⣿⣿⣿⣿⣿⣿⣿⡇⠀⣀⢭⣩⣿⣿⢁⣿⠜⣿⣿⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣧⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⢸⣿⡇⢻⣿⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠳⡀⠀⠤⠀⢘⢻⣙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣿⣿⡇⣽⣿⣿⣸⣿⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢘⣭⣾⣥⣶⣧⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡈⣿⣿⣿⣿⣿⣿⡇⣿⣿⣿⡇⣿⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢺⣿⣿⣿⣿⣿⢱⣿⣿⣿⣇⣿⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢏⣾⣿⣿⣿⣿⢇⣿⣿⣿⣿⣷⢸⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢧⡀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣾⣿⣿⣿⣿⢏⣾⣿⣿⣿⣿⣿⠘⣿⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣙⣂⣀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣭⣝⣛⠿⢿⡿⠿⠿⠿⣛⣤⣿⣿⡿⠁⣴⣿⣿⣿⣿⣿⣿⠀⢸⣿⣿<br>
-⠀⠀⠀⠀⠀⠀⠀⠀⢠⢀⢶⣝⢜⢿⣿⣿⣶⡄⠀⠀⠀⠀⢩⡻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢟⢛⣼⣿⡿⠃⠐⠁⠈⠁⠉⠁⠀⠀⠀⠀⠀⠀⠙<br>
-⠀⠀⠀⠀⠀⢀⡄⠀⢸⣧⡳⡹⣷⣦⡙⠿⣿⣿⣦⠀⠀⠀⠀⢮⣔⣉⠻⣿⣿⣿⣿⣿⣿⣿⣿⣷⣭⣾⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀<br>
-⠀⠀⠀⠀⣠⣿⡇⠀⠈⣿⣷⣝⢮⡻⣿⣮⡲⣭⡛⠷⡀⠀⠀⠈⠿⣿⣿⣆⠈⠙⠛⠿⢿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀<br>
-⠀⠀⠀⣼⣿⣿⣇⠀⠀⢻⣿⣿⣷⣝⠎⡻⣿⣶⣝⠷⣤⡀⠀⠀⠐⣭⣭⢹⠿⢷⢄⠤⡀⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀<br>
-⠀⠀⣼⣿⣿⣿⣿⡄⠀⠘⣿⣿⣿⣿⣿⣾⣔⡙⠻⠿⣾⣽⣂⠀⠀⠹⠿⡷⢼⣷⣴⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣴⣾⣿⣿⣿⣶⣦⣄⡀⠀⠀⠀</p>`;
-                    break;
-            
-                    
+                
             default:
                 response.innerHTML = `<span class="prompt">></span> Command not recognized: ${command}<br>
                 <span class="prompt">></span> Type 'help' for available commands`;
+                consoleOutput.appendChild(response);
         }
         
-        consoleOutput.appendChild(response);
         consoleOutput.scrollTop = consoleOutput.scrollHeight;
     }
     
