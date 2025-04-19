@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             consoleOutput.appendChild(artDisplay);
                         } else {
                             response.innerHTML = `<span class="prompt">></span> ASCII art not found: ${artName}<br>
-                            <span class="prompt">></span> Available options: chiikawa, hachiware, usagi, stocking, bad_apple`;
+                            <span class="prompt">></span> Available options: chiikawa, hachiware, usagi, stocking, badapple`;
                             consoleOutput.appendChild(response);
                         }
                     });
@@ -320,7 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     response.innerHTML = `<span class="prompt">></span> <b>ദ്ദി ˉ͈̀꒳ˉ͈́ )✧</b>  <i>Available ASCII art:</i><br>
                     <span class="prompt">></span> ✦ chiikawa | hachiware | usagi<br>
                     <span class="prompt">></span> ✦ stocking<br>
-                    <span class="prompt">></span> ✦ dick<br>`;
+                    <span class="prompt">></span> ✦ dick<br>
+                    <span class="prompt">></span> ✦ night<br>
+                    <span class="prompt">></span> ✦ badapple`;
                     consoleOutput.appendChild(response);
                 }
                 break;
@@ -394,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Gallery Section
 const imageGrid = document.getElementById('image-grid');
-const imageUrls = Array.from({ length: 11 }, (_, i) => `gallery/pic${i + 1}.jpg`);
+const imageUrls = Array.from({ length: 17 }, (_, i) => `gallery/pic${i + 1}.jpg`);
 
 // Create preview container
 const previewContainer = document.createElement('div');
@@ -432,16 +434,62 @@ const updatePreviewPosition = throttle((e) => {
     const { clientX: mouseX, clientY: mouseY } = e;
     const { innerWidth: viewportWidth, innerHeight: viewportHeight } = window;
 
-    const previewWidth = Math.min(400, viewportWidth * 0.4);
-    const previewHeight = Math.min(400, viewportHeight * 0.4);
+    // Calculate image dimensions
+    const imgWidth = previewImg.naturalWidth;
+    const imgHeight = previewImg.naturalHeight;
+    const imgAspectRatio = imgWidth / imgHeight;
+    
+    // Set base dimensions (percentages of viewport)
+    const maxViewportWidth = viewportWidth * 0.4;
+    const maxViewportHeight = viewportHeight * 0.4;
+    
+    // Calculate optimal dimensions while maintaining aspect ratio
+    let previewWidth, previewHeight;
+    
+    if (imgWidth <= maxViewportWidth && imgHeight <= maxViewportHeight) {
+        // For small images, use their natural size
+        previewWidth = imgWidth;
+        previewHeight = imgHeight;
+    } else {
+        // For larger images, scale down proportionally
+        if (imgAspectRatio > maxViewportWidth / maxViewportHeight) {
+            previewWidth = maxViewportWidth;
+            previewHeight = maxViewportWidth / imgAspectRatio;
+        } else {
+            previewHeight = maxViewportHeight;
+            previewWidth = maxViewportHeight * imgAspectRatio;
+        }
+    }
 
-    const margin = 20;
-    const left = mouseX + previewWidth + margin > viewportWidth
-        ? mouseX - previewWidth - margin
-        : mouseX + margin;
-    const top = mouseY + previewHeight + margin > viewportHeight
-        ? mouseY - previewHeight - margin
-        : mouseY + margin;
+    // Ensure minimum dimensions with visual balance
+    const minSize = 100;
+    if (previewWidth < minSize) {
+        previewWidth = minSize;
+        previewHeight = minSize / imgAspectRatio;
+    }
+    if (previewHeight < minSize) {
+        previewHeight = minSize;
+        previewWidth = minSize * imgAspectRatio;
+    }
+
+    // Adjust margins based on aspect ratio for visual balance
+    const baseMargin = 20;
+    let horizontalMargin = baseMargin;
+    let verticalMargin = baseMargin;
+    
+    // For rectangular images, adjust margins to appear more balanced
+    if (imgAspectRatio > 1.2) { // Landscape
+        verticalMargin = baseMargin * (0.8 + (1 / imgAspectRatio));
+    } else if (imgAspectRatio < 0.8) { // Portrait
+        horizontalMargin = baseMargin * (0.8 + imgAspectRatio);
+    }
+
+    const left = mouseX + previewWidth + horizontalMargin > viewportWidth
+        ? mouseX - previewWidth - horizontalMargin
+        : mouseX + horizontalMargin;
+    const top = mouseY + previewHeight + verticalMargin > viewportHeight
+        ? mouseY - previewHeight - verticalMargin
+        : mouseY + verticalMargin;
 
     previewContainer.style.width = `${previewWidth}px`;
     previewContainer.style.height = `${previewHeight}px`;
@@ -451,8 +499,10 @@ const updatePreviewPosition = throttle((e) => {
 // Utility: Show preview
 function showPreview(url, e) {
     previewImg.src = url;
-    previewContainer.classList.remove('hidden');
-    updatePreviewPosition(e);
+    previewImg.onload = () => {
+        previewContainer.classList.remove('hidden');
+        updatePreviewPosition(e);
+    };
 }
 
 // Utility: Hide preview
@@ -925,5 +975,18 @@ volumeSlider.addEventListener('input', (e) => {
     if (ytApiPlayer && ytApiReady) {
         ytApiPlayer.setVolume(playerVolume);
     }
-    
+   // Add this to your slider input event handlers
+slider.addEventListener('input', function() {
+    const percentage = (this.value - this.min) / (this.max - this.min) * 100;
+    this.style.setProperty('--slider-percentage', `${percentage}%`);
+}); 
+
+// Add this to your JavaScript file
+document.querySelectorAll('input[type="range"]').forEach(slider => {
+    slider.addEventListener('input', function() {
+        const percentage = (this.value - this.min) / (this.max - this.min) * 100;
+        this.style.setProperty('--slider-percentage', `${percentage}%`);
+    });
+});
+
 });

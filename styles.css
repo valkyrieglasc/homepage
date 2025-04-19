@@ -1662,3 +1662,183 @@ body {
     transform: scale(1.2);
     box-shadow: var(--strong-glow);
 }
+
+
+/* Track Styles */
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(125, 95, 255, 0.1); /* Changed to solid transparent background */
+    border-radius: 0;
+    border: none;
+}
+
+/* Track Highlight Effect */
+input[type="range"]::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: var(--slider-percentage, 50%);
+    height: 2px;
+    background: var(--primary);
+    transform: translateY(-50%);
+    box-shadow: 0 0 10px var(--primary);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Firefox-specific styles */
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(125, 95, 255, 0.1); /* Changed to solid transparent background */
+    border: none;
+}
+
+/* Volume slider specific styles */
+#volume-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    background: rgba(125, 95, 255, 0.1); /* Changed to solid transparent background */
+    border-radius: 0px;
+    outline: none;
+    position: relative;
+    border: 1px solid rgba(125, 95, 255, 0.3);
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    margin-top: -8px;
+    background: var(--bg);
+    border: 2px solid var(--primary);
+    position: relative;
+    z-index: 2;
+    transform: rotate(45deg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 0 10px var(--primary),
+        inset 0 0 4px var(--primary);
+}
+
+/* Hover Effects */
+input[type="range"]:hover::-webkit-slider-thumb {
+    transform: rotate(135deg) scale(1.2);
+    box-shadow: 
+        0 0 15px var(--primary),
+        0 0 25px var(--secondary),
+        inset 0 0 8px var(--primary);
+    border-width: 2px;
+}
+
+/* Active/Focus Effects */
+input[type="range"]:active::-webkit-slider-thumb {
+    transform: rotate(225deg) scale(0.95);
+    background: var(--primary);
+    box-shadow: 
+        0 0 20px var(--primary),
+        0 0 30px var(--secondary),
+        inset 0 0 10px var(--bg);
+}
+
+/* Track Highlight Effect */
+input[type="range"]::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: var(--slider-percentage, 50%);
+    height: 2px;
+    background: var(--primary);
+    transform: translateY(-50%);
+    box-shadow: 0 0 10px var(--primary);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Slider Container Styles */
+.slider-container {
+    position: relative;
+    padding: 10px;
+    background: rgba(10, 10, 26, 0.3);
+    border: 1px solid var(--primary);
+    margin: 10px 0;
+}
+
+/* Slider Value Display */
+.slider-value {
+    position: absolute;
+    top: -25px;
+    left: var(--slider-percentage, 50%);
+    transform: translateX(-50%);
+    background: var(--bg);
+    color: var(--primary);
+    padding: 2px 6px;
+    border: 1px solid var(--primary);
+    font-size: 0.8em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+input[type="range"]:hover + .slider-value {
+    opacity: 1;
+}
+
+/* Slider Ticks */
+.slider-ticks {
+    position: absolute;
+    width: 100%;
+    height: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.slider-tick {
+    position: absolute;
+    width: 1px;
+    height: 5px;
+    background: var(--primary);
+    opacity: 0.5;
+}
+
+/* Animation for active slider */
+@keyframes slider-glow {
+    0% {
+        box-shadow: 0 0 5px var(--primary);
+    }
+    50% {
+        box-shadow: 0 0 15px var(--primary), 0 0 25px var(--secondary);
+    }
+    100% {
+        box-shadow: 0 0 5px var(--primary);
+    }
+}
+
+input[type="range"]:active {
+    animation: slider-glow 2s infinite;
+}
+
+/* Firefox-specific styles */
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    background:rgba(125, 95, 255, 0.1);
+    border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    background: var(--bg);
+    border: 2px solid var(--primary);
+    transform: rotate(45deg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 0 10px var(--primary),
+        inset 0 0 4px var(--primary);
+}
