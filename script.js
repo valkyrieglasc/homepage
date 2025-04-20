@@ -1,10 +1,8 @@
 // At the top of your JS
 const terminalSound = new Audio('./sound/starting.mp3');
-const diceSound = new Audio('./sound/dice.mp3');
 
-// Preload sounds
+// Preload sound
 terminalSound.preload = 'auto';
-diceSound.preload = 'auto';
 
 function playTerminalSound() {
     terminalSound.currentTime = 0;
@@ -12,28 +10,13 @@ function playTerminalSound() {
     terminalSound.play().catch(e => console.log("Audio play failed:", e));
 }
 
-function playDiceSound() {
-    diceSound.currentTime = 0;
-    diceSound.volume = 0.2;
-    diceSound.play().catch(e => console.log("Audio play failed:", e));
-}
 document.addEventListener('DOMContentLoaded', function() {
-    
-    
     // Navigation
     const navItems = document.querySelectorAll('.nav-item');
     const sections = document.querySelectorAll('.section');
     
     navItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            
-            if (this.id === 'fullscreen-btn') {
-                
-                toggleFullscreen();
-                
-                return;
-            }
-            
             e.preventDefault();
             
             // Remove active class from all nav items and sections
@@ -45,18 +28,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show corresponding section
             const sectionId = this.getAttribute('data-section');
-            const activeSection = document.getElementById(sectionId);
-            activeSection.classList.add('active');
+            document.getElementById(sectionId).classList.add('active');
             
             // Reset typewriters in the new section
-            resetTypewriters(activeSection);
+            resetTypewriters(document.getElementById(sectionId));
             
             // Initialize typewriters in the new section
             setTimeout(() => {
                 initializeTypewriters();
             }, 50);
-            
-
         });
     });
     
@@ -127,21 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('fullscreen-btn').textContent = '[FULLSCREEN]';
             }
         }
-    }
-    
-    // Sound effects
-    function playTerminalSound() {
-        const sound = document.getElementById('terminal-sound');
-        sound.currentTime = 0;
-        sound.volume = 0.3;
-        sound.play();
-    }
-    
-    function playDiceSound() {
-        const sound = document.getElementById('dice-sound');
-        sound.currentTime = 0;
-        sound.volume = 0.2;
-        sound.play();
     }
     
     // Vietnam Time Display
@@ -328,7 +293,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
                 
             case 'clear':
-                playDiceSound();
                 consoleOutput.innerHTML = '';
                 return;
                 
@@ -339,14 +303,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
                 
             case 'fullscreen':
-                playDiceSound();
                 toggleFullscreen();
                 response.innerHTML = `<span class="prompt">></span> Fullscreen mode toggled`;
                 consoleOutput.appendChild(response);
                 break;
                 
             case 'glitch':
-                playTerminalSound();
                 triggerGlitchEffect();
                 response.innerHTML = `<span class="prompt">></span> Visual glitch effect executed`;
                 consoleOutput.appendChild(response);
@@ -356,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 response.innerHTML = `<span class="prompt">></span> ╭────────────────────────────────────────────────╮<br>
                 <span class="prompt">></span> ┃ <strong>❤︎ THE_GLASC://KYRIE</strong><br>                                
                 <span class="prompt">></span> ┃ Made by <i>@valkyrie_glasc</i><br>      
-                <span class="prompt">></span> ┃ Sections: <u>[HOME]</u> <u>[GALLERY]</u> <u>[DICE]</u><br>
+                <span class="prompt">></span> ┃ Sections: <u>[HOME]</u> <u>[GALLERY]</u><br>
                 <span class="prompt">></span> ╰────────────────────────────────────────────────╯`;
                 consoleOutput.appendChild(response);
                 break;
@@ -558,43 +520,6 @@ document.addEventListener('keydown', (e) => {
         hidePreview();
     }
 });
-    // Dice Section
-    const diceResult = document.getElementById('dice-result');
-    const rollBtn = document.getElementById('roll-btn');
-    const rollHistory = document.getElementById('roll-history');
-    
-    function rollDice() {
-        rollBtn.disabled = true;
-        diceResult.classList.add('dice-roll-glitch');
-        
-        let rolls = 0;
-        const animation = setInterval(() => {
-            diceResult.textContent = Math.floor(Math.random() * 6) + 1;
-            rolls++;
-            
-            if (rolls > 15) {
-                clearInterval(animation);
-                const finalResult = Math.floor(Math.random() * 6) + 1;
-                diceResult.textContent = finalResult;
-                rollBtn.disabled = false;
-                
-                diceResult.classList.remove('dice-roll-glitch');
-                diceResult.classList.add('dice-result-highlight');
-                setTimeout(() => {
-                    diceResult.classList.remove('dice-result-highlight');
-                }, 1000);
-                
-                const historyItem = document.createElement('div');
-                historyItem.innerHTML = `<span class="prompt">></span> Roll #${rollHistory.children.length + 1}: <span class="highlight">${finalResult}</span>`;
-                rollHistory.appendChild(historyItem);
-                rollHistory.scrollTop = rollHistory.scrollHeight;
-                
-                playDiceSound();
-            }
-        }, 100);
-    }
-    
-    rollBtn.addEventListener('click', rollDice);
     
     // Typewriter Effect - IMPROVED
     function initializeTypewriters() {
@@ -705,7 +630,7 @@ document.addEventListener('keydown', (e) => {
         }, 30000);
         
         setInterval(() => {
-            const elements = document.querySelectorAll('.grid-item, .dice, .cyber-button');
+            const elements = document.querySelectorAll('.grid-item, .cyber-button');
             const randomElement = elements[Math.floor(Math.random() * elements.length)];
             randomElement.classList.add('pulse-highlight');
             setTimeout(() => {

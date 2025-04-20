@@ -20,9 +20,8 @@
             <div class="nav">
                 <a href="#" class="nav-item active" data-section="home">[HOME]</a>
                 <a href="#" class="nav-item" data-section="gallery">[GALLERY]</a>
-                <a href="#" class="nav-item" data-section="dice">[DICE]</a>
+                <a href="#" class="nav-item" data-section="game">[GAME]</a>
                 <a href="#" class="nav-item" data-section="music">[MUSIC]</a>
-                <a href="#" class="nav-item" id="fullscreen-btn">[FULLSCREEN]</a>
             </div>
         </div>
         
@@ -46,18 +45,30 @@
                 <div class="grid-container" id="image-grid"></div>
                 <div class="prompt">> <span class="typewriter" data-delay="0">GALLERY_OF_MEMORIES</span></div>
             </div>
-            
-            <!-- Dice Section -->
-            <div id="dice" class="section">
-                <div class="prompt">> <span class="typewriter">DICE_SIMULATOR_ACTIVATED</span></div>
-                <div class="prompt">> <span class="typewriter" data-delay="0">QUANTUM_RANDOMIZER_ENGAGED</span></div>
-                <div class="dice-container">
-                    <div class="dice" id="dice-result">?</div>
-                    <button id="roll-btn" class="cyber-button">[ROLL DICE]</button>
+
+            <!-- Game Section -->
+            <div id="game" class="section">
+                <div class="prompt">> <span class="typewriter">GAME_MODULE_LOADED...</span></div>
+                <div class="prompt">> <span class="typewriter" data-delay="0">LOADING_GAME_LIBRARY</span></div>
+                
+                <!-- Game List -->
+                <div class="games-grid">
+                    <a href="game/wordtick/wordtick.html" class="game-container">
+                        <div class="game-title">> [IN DEV] WORD_BOMB_TICK</div>
+                        <div class="game-description">Test your vocabulary skills before time runs out! Type words containing the given syllable to survive!</div>
+                    </a>
+                    <a href="game/dice/dice.html" class="game-container">
+                        <div class="game-title">> QUANTUM_RANDOMIZER</div>
+                        <div class="game-description">Roll the quantum dice and test your luck!</div>
+                    </a>
+                    <a href="game/sudoku/sudoku.html" class="game-container">
+                        <div class="game-title">> CYBER_SUDOKU</div>
+                        <div class="game-description">Challenge your mind with this cyberpunk-themed Sudoku puzzle!</div>
+                    </a>
                 </div>
-                <div class="roll-history" id="roll-history"></div>
             </div>
-                        <!-- Music Section -->
+
+            <!-- Music Section -->
             <div id="music" class="section">
                 <div class="prompt">> <span class="typewriter">MUSIC_PLAYER_LOADED...</span></div>
                 <div class="prompt">> <span class="typewriter" data-delay="0">LOADING_YOUTUBE_PLAYLIST</span></div>

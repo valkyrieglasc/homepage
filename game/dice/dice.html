@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DICE - THE_GLASC://KYRIE</title>
+    <link rel="icon" href="../../favicon/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="dice.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="glitch-overlay"></div>
+    <div class="particles"></div>
+    <div class="glow-effect"></div>
+    
+    <div class="terminal">
+        <div class="header">
+            <div class="title glitch" data-text="THE_GLASC://KYRIE">❤︎ THE_GLASC://KYRIE || ₍₍ (̨̡⸝⸝´꒳`⸝⸝)̧̢ ₎₎</div>
+            <div class="header-pulse"></div>
+            <div class="nav">
+                <a href="../../index.html" class="nav-item">[BACK]</a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div id="dice" class="section active">
+                <div class="prompt">> <span class="typewriter">DICE_MODULE_LOADED...</span></div>
+                <div class="prompt">> <span class="typewriter" data-delay="0">INITIALIZING_QUANTUM_RANDOMIZER</span></div>
+                
+                <div class="dice-container">
+                    <div class="dice" id="dice-result">?</div>
+                    <button id="roll-btn" class="cyber-button">[ROLL DICE]</button>
+                </div>
+                <div class="roll-history" id="roll-history"></div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="dice-sound" src="../../sound/dice.mp3" preload="auto"></audio>
+    
+    <script src="dice.js"></script>
+</body>
+</html>

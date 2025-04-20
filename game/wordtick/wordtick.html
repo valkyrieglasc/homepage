@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORDBOMB_TICK://GAME</title>
+    <script src="https://cdn.jsdelivr.net/npm/typo-js@1.2.1/typo/typo.js"></script>
+    <link rel="stylesheet" href="wordtick.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="glitch-overlay"></div>
+    <div class="particles"></div>
+    <div class="glow-effect"></div>
+    
+    <div class="terminal">
+        <div class="header">
+            <div class="title glitch" data-text="WORDBOMB_TICK://GAME">❤︎ WORDBOMB_TICK://GAME</div>
+            <div class="header-pulse"></div>
+            <a href="../../index.html" class="back-button cyber-button">← BACK_TO_HOME</a>
+        </div>
+        
+        <div class="game-container">
+            <div class="game-info">
+                <div class="timer">Time: <span id="timeLeft">10</span>s</div>
+                <div class="score">Score: <span id="score">0</span></div>
+            </div>
+
+            <div class="word-display">
+                <div class="given-text">Type a word containing:</div>
+                <div id="targetSyllable" class="syllable glitch"></div>
+            </div>
+
+            <div class="input-line">
+                <span class="prompt">> </span>
+                <input type="text" id="wordInput" placeholder="Enter your word..." autofocus>
+            </div>
+
+            <div class="word-history">
+                <div class="history-title">> WORD_HISTORY:</div>
+                <div id="wordList" class="history-list"></div>
+            </div>
+        </div>
+
+        <div class="game-over hidden" id="gameOverScreen">
+            <div class="game-over-title glitch" data-text="GAME_OVER">GAME_OVER</div>
+            <div class="final-score">Final Score: <span id="finalScore">0</span></div>
+            <button class="cyber-button" id="restartButton">RESTART_GAME</button>
+        </div>
+    </div>
+
+    <audio id="tickSound" src="../../sound/tick.mp3" preload="auto"></audio>
+    <script src="wordtick.js"></script>
+</body>
+</html>
