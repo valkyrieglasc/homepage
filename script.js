@@ -1,13 +1,30 @@
-// At the top of your JS
+// Audio initialization
 const terminalSound = new Audio('./sound/starting.mp3');
+const diceSound = new Audio('./sound/dice.mp3');
+const Badapple = new Audio('./sound/badapple.mp3');
 
 // Preload sound
 terminalSound.preload = 'auto';
+diceSound.preload = 'auto';
+Badapple.preload = 'auto';
+Badapple.loop = true; // Enable audio looping
 
 function playTerminalSound() {
     terminalSound.currentTime = 0;
     terminalSound.volume = 0.3;
     terminalSound.play().catch(e => console.log("Audio play failed:", e));
+}
+
+function playDiceSound() {
+    diceSound.currentTime = 0;
+    diceSound.volume = 0.2;
+    diceSound.play().catch(e => console.log("Audio play failed:", e));
+}
+
+function playBadapple() {
+    Badapple.currentTime = 0;
+    Badapple.volume = 0.2;
+    Badapple.play().catch(e => console.log("Audio play failed:", e));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -153,6 +170,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const frames = await loadAsciiArt(artName);
         if (!frames) return false;
 
+        // Play Bad Apple music only for badapple animation
+        if (artName === 'badapple') {
+            playBadapple();
+        }
+
         const artContainer = document.createElement('div');
         artContainer.classList.add('ascii-container');
         
@@ -178,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         speedSlider.type = 'range';
         speedSlider.min = '50';
         speedSlider.max = '500';
-        speedSlider.value = '100';
+        speedSlider.value = '90';
         speedSlider.className = 'ascii-speed-slider';
         const speedLabel = document.createElement('span');
         speedLabel.textContent = 'Speed: ';
@@ -238,6 +260,11 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             if (animationInterval) {
                 clearInterval(animationInterval);
+                // Stop Bad Apple music when animation ends
+                if (artName === 'badapple') {
+                    Badapple.pause();
+                    Badapple.currentTime = 0;
+                }
             }
         }, 300000); // 5 minutes timeout
         
@@ -293,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
                 
             case 'clear':
+                playDiceSound();
                 consoleOutput.innerHTML = '';
                 return;
                 
@@ -310,6 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             case 'glitch':
                 triggerGlitchEffect();
+                playTerminalSound();
                 response.innerHTML = `<span class="prompt">></span> Visual glitch effect executed`;
                 consoleOutput.appendChild(response);
                 break;
@@ -320,6 +349,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span class="prompt">></span> ┃ Made by <i>@valkyrie_glasc</i><br>      
                 <span class="prompt">></span> ┃ Sections: <u>[HOME]</u> <u>[GALLERY]</u><br>
                 <span class="prompt">></span> ╰────────────────────────────────────────────────╯`;
+                consoleOutput.appendChild(response);
+                break;
+            
+            case 'ascii badapple':
+                playBadapple();
+                consoleOutput.innerHTML = '';
                 consoleOutput.appendChild(response);
                 break;
                 
